@@ -1,0 +1,24 @@
+{
+  "name": "HeyMax Design Tools",
+  "id": "heymax-design-tools",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "dist/ui.html",
+  "editorType": ["figma", "figjam"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": [
+      "https://fal.run",
+      "https://queue.fal.run",
+      "https://*.fal.media",
+      "https://api.replicate.com",
+      "https://*.replicate.delivery",
+      "https://*.workers.dev",
+      "https://*.pages.dev",
+      "https://api.openai.com",
+      "https://*.oaiusercontent.com",
+      "https://generativelanguage.googleapis.com"
+    ],
+    "reasoning": "Calls image generation APIs (fal.ai, Replicate via user-deployed Cloudflare Worker proxy on *.workers.dev, OpenAI, Google Gemini) and downloads result images from their CDNs."
+  }
+}

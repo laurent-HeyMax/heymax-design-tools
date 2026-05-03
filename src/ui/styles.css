@@ -1,0 +1,163 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Figma injects --figma-color-* CSS variables into the plugin iframe
+  when `themeColors: true` is set in figma.showUI(). They flip between
+  light and dark when the user toggles their Figma theme.
+
+  For the standalone browser preview (no Figma host), we provide
+  fallbacks here that follow the system color-scheme.
+*/
+:root {
+  --figma-color-bg: #ffffff;
+  --figma-color-bg-secondary: #f5f5f5;
+  --figma-color-bg-tertiary: #ebebeb;
+  --figma-color-bg-hover: #efefef;
+  --figma-color-bg-pressed: #e3e3e3;
+  --figma-color-bg-disabled: #e6e6e6;
+  --figma-color-bg-brand: #0d99ff;
+  --figma-color-bg-brand-hover: #007be5;
+  --figma-color-bg-brand-pressed: #006bc8;
+  --figma-color-bg-brand-tertiary: rgba(13, 153, 255, 0.1);
+  --figma-color-bg-warning: #b86e02;
+  --figma-color-bg-danger: #f24822;
+
+  --figma-color-text: #1e1e1e;
+  --figma-color-text-secondary: #444;
+  --figma-color-text-tertiary: #8a8a8a;
+  --figma-color-text-disabled: #b3b3b3;
+  --figma-color-text-onbrand: #ffffff;
+  --figma-color-text-brand: #0d99ff;
+  --figma-color-text-warning: #b86e02;
+  --figma-color-text-danger: #c5391b;
+
+  --figma-color-icon: #1e1e1e;
+  --figma-color-icon-secondary: #444;
+  --figma-color-icon-tertiary: #8a8a8a;
+  --figma-color-icon-onbrand: #ffffff;
+  --figma-color-icon-brand: #0d99ff;
+
+  --figma-color-border: #e6e6e6;
+  --figma-color-border-strong: #d6d6d6;
+  --figma-color-border-brand: #0d99ff;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --figma-color-bg: #2c2c2c;
+    --figma-color-bg-secondary: #383838;
+    --figma-color-bg-tertiary: #444444;
+    --figma-color-bg-hover: #383838;
+    --figma-color-bg-pressed: #4d4d4d;
+    --figma-color-bg-disabled: #4d4d4d;
+    --figma-color-bg-brand: #0c8ce9;
+    --figma-color-bg-brand-hover: #007be5;
+    --figma-color-bg-brand-pressed: #006bc8;
+    --figma-color-bg-brand-tertiary: rgba(12, 140, 233, 0.18);
+    --figma-color-bg-warning: #ffeec5;
+    --figma-color-bg-danger: #f24822;
+
+    --figma-color-text: #ffffff;
+    --figma-color-text-secondary: #cdcdcd;
+    --figma-color-text-tertiary: #8a8a8a;
+    --figma-color-text-disabled: #6e6e6e;
+    --figma-color-text-onbrand: #ffffff;
+    --figma-color-text-brand: #79c0ff;
+    --figma-color-text-warning: #fcd28e;
+    --figma-color-text-danger: #f57362;
+
+    --figma-color-icon: #ffffff;
+    --figma-color-icon-secondary: #cdcdcd;
+    --figma-color-icon-tertiary: #8a8a8a;
+    --figma-color-icon-onbrand: #ffffff;
+    --figma-color-icon-brand: #79c0ff;
+
+    --figma-color-border: #444444;
+    --figma-color-border-strong: #595959;
+    --figma-color-border-brand: #0c8ce9;
+
+    color-scheme: dark;
+  }
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--figma-color-bg);
+    color: var(--figma-color-text);
+    font-family: 'Inter', 'Inter Variable', -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+      system-ui, 'Segoe UI', Roboto, sans-serif;
+    font-size: 11px;
+    line-height: 16px;
+    font-feature-settings: 'cv11', 'ss01', 'calt' 0;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--figma-color-border-strong);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--figma-color-text-tertiary);
+  }
+
+  input[type='range'] {
+    -webkit-appearance: none;
+    background: transparent;
+    height: 16px;
+  }
+  input[type='range']::-webkit-slider-runnable-track {
+    height: 4px;
+    background: var(--figma-color-bg-tertiary);
+    border-radius: 999px;
+  }
+  input[type='range']::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 12px;
+    width: 12px;
+    border-radius: 999px;
+    background: var(--figma-color-bg-brand);
+    border: 2px solid var(--figma-color-bg);
+    margin-top: -4px;
+    cursor: pointer;
+  }
+
+  input[type='color'] {
+    padding: 0;
+    background: transparent;
+  }
+  input[type='color']::-webkit-color-swatch-wrapper {
+    padding: 2px;
+  }
+  input[type='color']::-webkit-color-swatch {
+    border: none;
+    border-radius: 4px;
+  }
+
+  code {
+    font-family: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10.5px;
+    background: var(--figma-color-bg-secondary);
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+}

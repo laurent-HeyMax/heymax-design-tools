@@ -1,0 +1,52 @@
+name: Deploy UI to Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-ui-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.7.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Write .env.production from secrets
+        run: |
+          cat > .env.production <<EOF
+          REPLICATE_PROXY=${{ secrets.REPLICATE_PROXY }}
+          UI_CDN_URL=${{ secrets.UI_CDN_URL }}
+          EOF
+
+      - run: pnpm build
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=heymax-design-tools --branch=main --commit-dirty=true
+
+      - name: Comment commit with deploy URL
+        if: success()
+        run: |
+          echo "✅ UI deployed to https://heymax-design-tools.pages.dev/ui.html"
+          echo "  Plugin will auto-pull on next launch (3s timeout, falls back to baked-in build)."
