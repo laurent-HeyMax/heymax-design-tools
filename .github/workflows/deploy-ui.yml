@@ -29,14 +29,53 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Write .env.production from secrets
+      - name: Validate Cloudflare deploy secrets
         run: |
-          cat > .env.production <<EOF
-          REPLICATE_PROXY=${{ secrets.REPLICATE_PROXY }}
-          UI_CDN_URL=${{ secrets.UI_CDN_URL }}
-          EOF
+          missing=()
+          [ -z "${{ secrets.CLOUDFLARE_API_TOKEN }}" ] && missing+=("CLOUDFLARE_API_TOKEN")
+          [ -z "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" ] && missing+=("CLOUDFLARE_ACCOUNT_ID")
+          if [ ${#missing[@]} -gt 0 ]; then
+            for s in "${missing[@]}"; do
+              echo "::error::Missing required GitHub repo secret: $s"
+            done
+            echo "Add the missing secret(s) under Settings → Secrets and variables → Actions → Repository secrets, then re-run."
+            exit 1
+          fi
+          echo "Cloudflare deploy secrets present."
+
+      - name: Confirm .env.production is committed
+        run: |
+          if [ ! -f .env.production ]; then
+            echo "::error::.env.production is missing — it must be committed at the repo root."
+            exit 1
+          fi
+          echo "::group::.env.production keys (values redacted)"
+          sed 's/=.*/=***/' .env.production
+          echo "::endgroup::"
 
       - run: pnpm build
+
+      - name: Sanity-check baked values made it into the bundle
+        run: |
+          replicate_url="$(grep -E '^REPLICATE_PROXY=' .env.production | cut -d= -f2- | tr -d '\r\n ')"
+          ui_cdn_url="$(grep -E '^UI_CDN_URL=' .env.production | cut -d= -f2- | tr -d '\r\n ')"
+          replicate_host="$(echo "$replicate_url" | sed -E 's#^https?://##' | cut -d/ -f1)"
+          ui_cdn_host="$(echo "$ui_cdn_url" | sed -E 's#^https?://##' | cut -d/ -f1)"
+
+          fail=0
+          if [ -n "$replicate_host" ] && grep -q "$replicate_host" dist/ui.html; then
+            echo "✅ REPLICATE_PROXY host found in dist/ui.html"
+          else
+            [ -z "$replicate_host" ] && echo "::warning::REPLICATE_PROXY is empty in .env.production; Replicate provider will not work." \
+                                    || { echo "::error::REPLICATE_PROXY host not in dist/ui.html"; fail=1; }
+          fi
+          if [ -n "$ui_cdn_host" ] && grep -q "$ui_cdn_host" dist/code.js; then
+            echo "✅ UI_CDN_URL host found in dist/code.js"
+          else
+            [ -z "$ui_cdn_host" ] && echo "::warning::UI_CDN_URL is empty; auto-update fetch will be skipped." \
+                                 || { echo "::error::UI_CDN_URL host not in dist/code.js"; fail=1; }
+          fi
+          exit $fail
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
@@ -45,8 +84,8 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=heymax-design-tools --branch=main --commit-dirty=true
 
-      - name: Comment commit with deploy URL
+      - name: Done
         if: success()
         run: |
-          echo "✅ UI deployed to https://heymax-design-tools.pages.dev/ui.html"
-          echo "  Plugin will auto-pull on next launch (3s timeout, falls back to baked-in build)."
+          ui_url="$(grep -E '^UI_CDN_URL=' .env.production | cut -d= -f2- | tr -d '\r\n ')"
+          echo "✅ UI deployed to ${ui_url:-(no UI_CDN_URL in .env.production)}"

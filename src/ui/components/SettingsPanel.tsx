@@ -123,7 +123,7 @@ export function SettingsPanel() {
           type="url"
           value={settings.replicateProxyUrl ?? ''}
           onChange={(e) => setReplicateProxyUrl(e.target.value)}
-          placeholder={import.meta.env.REPLICATE_PROXY ?? 'https://your-worker.workers.dev'}
+          placeholder={import.meta.env.REPLICATE_PROXY || 'https://your-worker.workers.dev'}
           spellCheck={false}
           autoComplete="off"
         />
