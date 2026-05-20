@@ -32,11 +32,19 @@ export interface AddImagePayload {
   total?: number;
 }
 
+export interface AddSvgItem {
+  svg: string;
+  label: string;
+  width: number;
+  height: number;
+}
+
 export type UiToMain =
   | { type: 'ready' }
   | { type: 'save-settings'; settings: PluginSettings }
   | { type: 'add-image'; payload: AddImagePayload }
   | { type: 'add-images'; payloads: AddImagePayload[] }
+  | { type: 'add-svgs'; items: AddSvgItem[] }
   | { type: 'notify'; message: string; level?: 'info' | 'error' }
   | { type: 'resize'; width: number; height: number }
   | { type: 'close' };

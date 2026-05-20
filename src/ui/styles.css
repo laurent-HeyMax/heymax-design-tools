@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Standalone browser preview (outside Figma): cap the body width so the UI
+   keeps plugin-like proportions on wide screens, and frame it with a subtle
+   border so it reads as a self-contained panel. */
+body.standalone {
+  max-width: 500px;
+  margin: 24px auto;
+  height: calc(100vh - 48px);
+  border: 1px solid var(--figma-color-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+body.standalone #root,
+body.standalone .h-screen {
+  height: 100%;
+}
+
 /*
   Figma injects --figma-color-* CSS variables into the plugin iframe
   when `themeColors: true` is set in figma.showUI(). They flip between

@@ -116,6 +116,34 @@ figma.ui.onmessage = async (msg: UiToMain) => {
         send({ type: 'image-added', ok: true });
         break;
       }
+      case 'add-svgs': {
+        await Promise.all(
+          (['Regular', 'Medium', 'SemiBold', 'Bold', 'ExtraBold'] as const).map((style) =>
+            figma.loadFontAsync({ family: 'Plus Jakarta Sans', style }).catch(() => {}),
+          ),
+        );
+        const gap = 24;
+        const totalWidth =
+          msg.items.reduce((sum, i) => sum + i.width, 0) + gap * Math.max(0, msg.items.length - 1);
+        const maxHeight = msg.items.reduce((m, i) => Math.max(m, i.height), 0);
+        const center = figma.viewport.center;
+        const originX = center.x - totalWidth / 2;
+        const originY = center.y - maxHeight / 2;
+        const nodes: SceneNode[] = [];
+        let cursorX = originX;
+        for (const item of msg.items) {
+          const node = figma.createNodeFromSvg(item.svg);
+          node.name = item.label;
+          node.x = cursorX;
+          node.y = originY;
+          figma.currentPage.appendChild(node);
+          nodes.push(node);
+          cursorX += item.width + gap;
+        }
+        if (nodes.length) figma.viewport.scrollAndZoomIntoView(nodes);
+        send({ type: 'image-added', ok: true });
+        break;
+      }
       case 'notify': {
         figma.notify(msg.message, { error: msg.level === 'error' });
         break;

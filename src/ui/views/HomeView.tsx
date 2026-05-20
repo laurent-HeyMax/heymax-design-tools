@@ -1,4 +1,4 @@
-import { ChevronRight, ImageIcon, type LucideIcon } from "lucide-react";
+import { ChevronRight, IdCard, ImageIcon, type LucideIcon } from "lucide-react";
 import { ResizeHandle } from "../components/ui/ResizeHandle";
 import { useStore, type ToolId } from "../state/store";
 
@@ -23,8 +23,16 @@ const TOOLS: (ToolTile | ComingSoonTile)[] = [
     id: "image-gen",
     name: "Image Generator",
     description:
-      "Generate images from prompts using fal.ai, Replicate, OpenAI, or Google Gemini.",
+      "Generate images from prompts using Replicate, OpenAI, or Google Gemini.",
     icon: ImageIcon,
+    available: true,
+  },
+  {
+    id: "name-card",
+    name: "Name Card Generator",
+    description:
+      "Generate a name card (front & back) with your details.",
+    icon: IdCard,
     available: true,
   },
 ];

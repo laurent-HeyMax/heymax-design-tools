@@ -1,6 +1,6 @@
 {
   "name": "heymax-design-tools",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.7.1",
@@ -13,6 +13,7 @@
   "dependencies": {
     "clsx": "^2.1.1",
     "lucide-react": "^0.460.0",
+    "qrcode-generator": "^2.0.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "zustand": "^4.5.5"
@@ -31,6 +32,8 @@
     "vite-plugin-singlefile": "^2.0.3"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

@@ -3,6 +3,7 @@ import type { FormFactorId, PluginSettings, ProviderId, SceneId } from '@shared/
 import { DEFAULT_SETTINGS, FORM_FACTORS } from '@shared/presets';
 import type { ColorAdjustments } from '../lib/colorAdjust';
 import { NEUTRAL_ADJUSTMENTS } from '../lib/colorAdjust';
+import { DEFAULT_NAME_CARD, type NameCardData } from '../lib/nameCard';
 import type { ReferenceImage } from '../providers/types';
 
 export type JobStatus = 'pending' | 'running' | 'done' | 'error';
@@ -27,7 +28,7 @@ export interface ResultJob {
   createdAt: number;
 }
 
-export type ToolId = 'image-gen';
+export type ToolId = 'image-gen' | 'name-card';
 export type ToolView = 'home' | ToolId;
 
 export interface UiState {
@@ -49,6 +50,8 @@ export interface UiState {
   adjustments: ColorAdjustments;
 
   jobs: ResultJob[];
+
+  nameCard: NameCardData;
 
   setView: (view: ToolView) => void;
   setTab: (tab: 'generate' | 'settings') => void;
@@ -77,6 +80,9 @@ export interface UiState {
   clearJobs: () => void;
   removeJob: (id: string) => void;
 
+  setNameCard: (patch: Partial<NameCardData>) => void;
+  resetNameCard: () => void;
+
   applyDefaults: () => void;
 }
 
@@ -102,6 +108,8 @@ export const useStore = create<UiState>((set, get) => ({
   referenceImage: undefined,
   adjustments: NEUTRAL_ADJUSTMENTS,
   jobs: [],
+
+  nameCard: DEFAULT_NAME_CARD,
 
   setView: (view) => set({ view, tab: view === 'image-gen' ? 'generate' : get().tab }),
   setTab: (tab) => set({ tab }),
@@ -158,6 +166,9 @@ export const useStore = create<UiState>((set, get) => ({
     set({ jobs: get().jobs.map((j) => (j.id === id ? { ...j, ...patch } : j)) }),
   clearJobs: () => set({ jobs: [] }),
   removeJob: (id) => set({ jobs: get().jobs.filter((j) => j.id !== id) }),
+
+  setNameCard: (patch) => set({ nameCard: { ...get().nameCard, ...patch } }),
+  resetNameCard: () => set({ nameCard: DEFAULT_NAME_CARD }),
 
   applyDefaults: () => {
     const s = get().settings;

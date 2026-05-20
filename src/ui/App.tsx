@@ -4,6 +4,7 @@ import { onFromMain, sendToMain } from './lib/messaging';
 import { useStore } from './state/store';
 import { HomeView } from './views/HomeView';
 import { ImageGenView } from './views/ImageGenView';
+import { NameCardView } from './views/NameCardView';
 
 export function App() {
   const view = useStore((s) => s.view);
@@ -52,5 +53,6 @@ export function App() {
   }
 
   if (view === 'image-gen') return <ImageGenView />;
+  if (view === 'name-card') return <NameCardView />;
   return <HomeView />;
 }
