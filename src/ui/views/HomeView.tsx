@@ -1,4 +1,4 @@
-import { ChevronRight, IdCard, ImageIcon, type LucideIcon } from "lucide-react";
+import { ChevronRight, IdCard, ImageIcon, Sparkles, type LucideIcon } from "lucide-react";
 import { ResizeHandle } from "../components/ui/ResizeHandle";
 import { useStore, type ToolId } from "../state/store";
 
@@ -33,6 +33,14 @@ const TOOLS: (ToolTile | ComingSoonTile)[] = [
     description:
       "Generate a name card (front & back) with your details.",
     icon: IdCard,
+    available: true,
+  },
+  {
+    id: "creatives",
+    name: "Partnership Banner Generator",
+    description:
+      "Co-branded rectangle and square banners with a partner logo.",
+    icon: Sparkles,
     available: true,
   },
 ];

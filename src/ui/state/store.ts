@@ -3,6 +3,7 @@ import type { FormFactorId, PluginSettings, ProviderId, SceneId } from '@shared/
 import { DEFAULT_SETTINGS, FORM_FACTORS } from '@shared/presets';
 import type { ColorAdjustments } from '../lib/colorAdjust';
 import { NEUTRAL_ADJUSTMENTS } from '../lib/colorAdjust';
+import { DEFAULT_CREATIVES, type CreativesData } from '../lib/creatives';
 import { DEFAULT_NAME_CARD, type NameCardData } from '../lib/nameCard';
 import type { ReferenceImage } from '../providers/types';
 
@@ -28,7 +29,7 @@ export interface ResultJob {
   createdAt: number;
 }
 
-export type ToolId = 'image-gen' | 'name-card';
+export type ToolId = 'image-gen' | 'name-card' | 'creatives';
 export type ToolView = 'home' | ToolId;
 
 export interface UiState {
@@ -52,6 +53,7 @@ export interface UiState {
   jobs: ResultJob[];
 
   nameCard: NameCardData;
+  creatives: CreativesData;
 
   setView: (view: ToolView) => void;
   setTab: (tab: 'generate' | 'settings') => void;
@@ -83,6 +85,9 @@ export interface UiState {
   setNameCard: (patch: Partial<NameCardData>) => void;
   resetNameCard: () => void;
 
+  setCreatives: (patch: Partial<CreativesData>) => void;
+  resetCreatives: () => void;
+
   applyDefaults: () => void;
 }
 
@@ -110,6 +115,7 @@ export const useStore = create<UiState>((set, get) => ({
   jobs: [],
 
   nameCard: DEFAULT_NAME_CARD,
+  creatives: DEFAULT_CREATIVES,
 
   setView: (view) => set({ view, tab: view === 'image-gen' ? 'generate' : get().tab }),
   setTab: (tab) => set({ tab }),
@@ -169,6 +175,9 @@ export const useStore = create<UiState>((set, get) => ({
 
   setNameCard: (patch) => set({ nameCard: { ...get().nameCard, ...patch } }),
   resetNameCard: () => set({ nameCard: DEFAULT_NAME_CARD }),
+
+  setCreatives: (patch) => set({ creatives: { ...get().creatives, ...patch } }),
+  resetCreatives: () => set({ creatives: DEFAULT_CREATIVES }),
 
   applyDefaults: () => {
     const s = get().settings;

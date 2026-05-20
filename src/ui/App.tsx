@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { DEFAULT_SETTINGS, FORM_FACTORS } from '@shared/presets';
 import { onFromMain, sendToMain } from './lib/messaging';
 import { useStore } from './state/store';
+import { CreativesView } from './views/CreativesView';
 import { HomeView } from './views/HomeView';
 import { ImageGenView } from './views/ImageGenView';
 import { NameCardView } from './views/NameCardView';
@@ -54,5 +55,6 @@ export function App() {
 
   if (view === 'image-gen') return <ImageGenView />;
   if (view === 'name-card') return <NameCardView />;
+  if (view === 'creatives') return <CreativesView />;
   return <HomeView />;
 }
