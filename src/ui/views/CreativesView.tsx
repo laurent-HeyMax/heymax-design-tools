@@ -7,6 +7,8 @@ import { ResizeHandle } from '../components/ui/ResizeHandle';
 import { Section } from '../components/ui/Section';
 import { Slider } from '../components/ui/Slider';
 import {
+  type CreativeVariant,
+  type GradientGeom,
   RECT_HEIGHT,
   RECT_WIDTH,
   SQUARE_SIZE,
@@ -328,67 +330,145 @@ export function CreativesView() {
           {autoHint && (
             <p className="mt-2 text-2xs text-text-faint">{autoHint}</p>
           )}
-          {resolvedBg === 'gradient' && (
-            <div className="mt-3 pt-3 border-t border-border space-y-2.5">
-              <div className="flex items-end gap-2">
-                <div className="flex-1">
-                  <Label>Start</Label>
-                  <div className="flex items-center gap-1.5">
-                    <input
-                      type="color"
-                      value={creatives.gradientStart}
-                      onChange={(e) => setCreatives({ gradientStart: e.target.value })}
-                      className="h-8 w-8 rounded border border-border cursor-pointer shrink-0 p-0 bg-transparent"
-                    />
-                    <Input
-                      value={creatives.gradientStart}
-                      onChange={(e) => setCreatives({ gradientStart: e.target.value })}
-                      className="font-mono"
-                      placeholder="#321B78"
-                    />
+          {resolvedBg === 'gradient' && (() => {
+            const scope = creatives.gradientScope;
+            const displayVariant: CreativeVariant = scope === 'square' ? 'square' : 'rect';
+            const displayGeom = creatives.gradientGeom[displayVariant];
+            const patchGeom = (patch: Partial<GradientGeom>) => {
+              const cur = creatives.gradientGeom;
+              if (scope === 'auto') {
+                const merged = { ...cur.rect, ...patch };
+                setCreatives({ gradientGeom: { rect: merged, square: { ...merged } } });
+              } else {
+                setCreatives({
+                  gradientGeom: { ...cur, [scope]: { ...cur[scope], ...patch } },
+                });
+              }
+            };
+            return (
+              <div className="mt-3 pt-3 border-t border-border space-y-2.5">
+                <div className="flex items-end gap-2">
+                  <div className="flex-1">
+                    <Label>Start</Label>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="color"
+                        value={creatives.gradientStart}
+                        onChange={(e) => setCreatives({ gradientStart: e.target.value })}
+                        className="h-8 w-8 rounded border border-border cursor-pointer shrink-0 p-0 bg-transparent"
+                      />
+                      <Input
+                        value={creatives.gradientStart}
+                        onChange={(e) => setCreatives({ gradientStart: e.target.value })}
+                        className="font-mono"
+                        placeholder="#321B78"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <Label>End</Label>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="color"
+                        value={creatives.gradientEnd}
+                        onChange={(e) => setCreatives({ gradientEnd: e.target.value })}
+                        className="h-8 w-8 rounded border border-border cursor-pointer shrink-0 p-0 bg-transparent"
+                      />
+                      <Input
+                        value={creatives.gradientEnd}
+                        onChange={(e) => setCreatives({ gradientEnd: e.target.value })}
+                        className="font-mono"
+                        placeholder="#130739"
+                      />
+                    </div>
                   </div>
                 </div>
-                <div className="flex-1">
-                  <Label>End</Label>
+                <div>
+                  <Label>Apply geometry to</Label>
                   <div className="flex items-center gap-1.5">
-                    <input
-                      type="color"
-                      value={creatives.gradientEnd}
-                      onChange={(e) => setCreatives({ gradientEnd: e.target.value })}
-                      className="h-8 w-8 rounded border border-border cursor-pointer shrink-0 p-0 bg-transparent"
-                    />
-                    <Input
-                      value={creatives.gradientEnd}
-                      onChange={(e) => setCreatives({ gradientEnd: e.target.value })}
-                      className="font-mono"
-                      placeholder="#130739"
-                    />
+                    <Chip
+                      selected={scope === 'auto'}
+                      onClick={() => {
+                        const merged = creatives.gradientGeom.rect;
+                        setCreatives({
+                          gradientScope: 'auto',
+                          gradientGeom: { rect: merged, square: { ...merged } },
+                        });
+                      }}
+                    >
+                      Auto
+                    </Chip>
+                    <Chip
+                      selected={scope === 'rect'}
+                      onClick={() => setCreatives({ gradientScope: 'rect' })}
+                    >
+                      Rectangle
+                    </Chip>
+                    <Chip
+                      selected={scope === 'square'}
+                      onClick={() => setCreatives({ gradientScope: 'square' })}
+                    >
+                      Square
+                    </Chip>
                   </div>
                 </div>
+                <Slider
+                  label="Center X"
+                  value={displayGeom.cx}
+                  min={0}
+                  max={100}
+                  onChange={(cx) => patchGeom({ cx })}
+                  suffix="%"
+                />
+                <Slider
+                  label="Center Y"
+                  value={displayGeom.cy}
+                  min={0}
+                  max={100}
+                  onChange={(cy) => patchGeom({ cy })}
+                  suffix="%"
+                />
+                <Slider
+                  label="Radius"
+                  value={displayGeom.r}
+                  min={20}
+                  max={200}
+                  onChange={(r) => patchGeom({ r })}
+                  suffix="%"
+                />
               </div>
-              <Slider
-                label="Center X"
-                value={creatives.gradientCx}
-                min={0}
-                max={100}
-                onChange={(gradientCx) => setCreatives({ gradientCx })}
-                suffix="%"
+            );
+          })()}
+        </Section>
+
+        <Section title="Divider color">
+          <div className="flex items-center gap-1.5">
+            <Chip
+              selected={creatives.dividerColorMode === 'auto'}
+              onClick={() => setCreatives({ dividerColorMode: 'auto' })}
+            >
+              Auto
+            </Chip>
+            <Chip
+              selected={creatives.dividerColorMode === 'custom'}
+              onClick={() => setCreatives({ dividerColorMode: 'custom' })}
+            >
+              Custom
+            </Chip>
+          </div>
+          {creatives.dividerColorMode === 'custom' && (
+            <div className="mt-3 pt-3 border-t border-border flex items-center gap-1.5">
+              <input
+                type="color"
+                value={creatives.dividerColor}
+                onChange={(e) => setCreatives({ dividerColor: e.target.value })}
+                className="h-8 w-8 rounded border border-border cursor-pointer shrink-0 p-0 bg-transparent"
               />
-              <Slider
-                label="Center Y"
-                value={creatives.gradientCy}
-                min={0}
-                max={100}
-                onChange={(gradientCy) => setCreatives({ gradientCy })}
-                suffix="%"
-              />
-              <Slider
-                label="Radius"
-                value={creatives.gradientR}
-                min={20}
-                max={200}
-                onChange={(gradientR) => setCreatives({ gradientR })}
-                suffix="%"
+              <Input
+                value={creatives.dividerColor}
+                onChange={(e) => setCreatives({ dividerColor: e.target.value })}
+                className="font-mono"
+                placeholder="#FFFFFF"
               />
             </div>
           )}

@@ -26,27 +26,46 @@ export interface PartnerAdjust {
 }
 
 export type CreativeVariant = 'rect' | 'square';
+export type GradientScope = 'auto' | CreativeVariant;
+export type DividerColorMode = 'auto' | 'custom';
+
+export interface GradientGeom {
+  /** Radial gradient center X, as a percentage of the canvas width. */
+  cx: number;
+  /** Radial gradient center Y, as a percentage of the canvas height. */
+  cy: number;
+  /** Radial gradient radius, as a percentage. */
+  r: number;
+}
 
 export interface CreativesData {
   background: CreativeBackground;
   gradientStart: string;
   gradientEnd: string;
-  gradientCx: number;
-  gradientCy: number;
-  gradientR: number;
+  /** Which variant the gradient sliders edit. 'auto' mirrors edits to both. */
+  gradientScope: GradientScope;
+  gradientGeom: Record<CreativeVariant, GradientGeom>;
+  /** 'auto' derives the divider color from the background/luminance; 'custom' uses dividerColor. */
+  dividerColorMode: DividerColorMode;
+  dividerColor: string;
   partnerLogo?: CreativeLogo;
   partnerAdjust: Record<CreativeVariant, PartnerAdjust>;
 }
 
 const DEFAULT_PARTNER_ADJUST: PartnerAdjust = { offsetX: 0, offsetY: 0, scale: 100 };
+const DEFAULT_GRADIENT_GEOM: GradientGeom = { cx: 25, cy: 25, r: 100 };
 
 export const DEFAULT_CREATIVES: CreativesData = {
   background: 'auto',
   gradientStart: '#321B78',
   gradientEnd: '#130739',
-  gradientCx: 25,
-  gradientCy: 25,
-  gradientR: 100,
+  gradientScope: 'auto',
+  gradientGeom: {
+    rect: { ...DEFAULT_GRADIENT_GEOM },
+    square: { ...DEFAULT_GRADIENT_GEOM },
+  },
+  dividerColorMode: 'auto',
+  dividerColor: '#FFFFFF',
   partnerLogo: undefined,
   partnerAdjust: {
     rect: { ...DEFAULT_PARTNER_ADJUST },
@@ -56,6 +75,8 @@ export const DEFAULT_CREATIVES: CreativesData = {
 
 /** Logos with average luminance above this are treated as "white-ish" and routed onto gradient. */
 const LIGHT_LOGO_THRESHOLD = 0.75;
+/** Gradient start colors at or above this luminance flip the HEY/divider to dark for contrast. */
+const LIGHT_GRADIENT_THRESHOLD = 0.6;
 
 export function resolveBackground(d: CreativesData): ResolvedBackground {
   if (d.background !== 'auto') return d.background;
@@ -63,10 +84,26 @@ export function resolveBackground(d: CreativesData): ResolvedBackground {
   return d.partnerLogo.luminance > LIGHT_LOGO_THRESHOLD ? 'gradient' : 'solid';
 }
 
-function backgroundDefs(d: CreativesData, idPrefix: string): string {
+function hexLuminance(hex: string): number {
+  const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return 0;
+  let h = m[1];
+  if (h.length === 3) h = h.split('').map((c) => c + c).join('');
+  const r = parseInt(h.slice(0, 2), 16) / 255;
+  const g = parseInt(h.slice(2, 4), 16) / 255;
+  const b = parseInt(h.slice(4, 6), 16) / 255;
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function gradientIsLight(d: CreativesData): boolean {
+  return hexLuminance(d.gradientStart) > LIGHT_GRADIENT_THRESHOLD;
+}
+
+function backgroundDefs(d: CreativesData, idPrefix: string, variant: CreativeVariant): string {
   if (resolveBackground(d) === 'solid') return '';
   const id = `${idPrefix}-bg`;
-  return `<radialGradient id="${id}" cx="${d.gradientCx}%" cy="${d.gradientCy}%" r="${d.gradientR}%">
+  const geom = d.gradientGeom[variant];
+  return `<radialGradient id="${id}" cx="${geom.cx}%" cy="${geom.cy}%" r="${geom.r}%">
     <stop offset="0%" stop-color="${d.gradientStart}" stop-opacity="1" />
     <stop offset="100%" stop-color="${d.gradientEnd}" stop-opacity="1" />
   </radialGradient>`;
@@ -77,12 +114,15 @@ function backgroundFill(bg: ResolvedBackground, idPrefix: string): string {
   return `url(#${idPrefix}-bg)`;
 }
 
-function heyFill(bg: ResolvedBackground): string {
-  return bg === 'solid' ? '#130739' : '#FFFFFF';
+function heyFill(bg: ResolvedBackground, d: CreativesData): string {
+  if (bg === 'solid') return '#130739';
+  return gradientIsLight(d) ? '#130739' : '#FFFFFF';
 }
 
-function dividerColor(bg: ResolvedBackground): string {
-  return bg === 'solid' ? '#130739' : '#FFFFFF';
+function dividerColor(bg: ResolvedBackground, d: CreativesData): string {
+  if (d.dividerColorMode === 'custom') return d.dividerColor;
+  if (bg === 'solid') return '#130739';
+  return gradientIsLight(d) ? '#130739' : '#FFFFFF';
 }
 
 interface PlacedLogo {
@@ -145,14 +185,14 @@ export function rectangleCreativeSvg(d: CreativesData): string {
   const logo = heymaxLogo({
     transform: `translate(${heymaxX.toFixed(2)}, ${heymaxY.toFixed(2)})`,
     width: heymaxW,
-    heyFill: heyFill(bg),
+    heyFill: heyFill(bg, d),
     gradientId: `${idPrefix}-hmGrad`,
   });
 
   const dividerHeight = 192;
   const dividerY1 = (H - dividerHeight) / 2;
   const dividerY2 = dividerY1 + dividerHeight;
-  const divider = `<line x1="${halfW}" y1="${dividerY1}" x2="${halfW}" y2="${dividerY2}" stroke="${dividerColor(bg)}" stroke-width="3" />`;
+  const divider = `<line x1="${halfW}" y1="${dividerY1}" x2="${halfW}" y2="${dividerY2}" stroke="${dividerColor(bg, d)}" stroke-width="3" />`;
 
   const partnerBoxX = halfW + padding;
   const partnerBoxW = W - heymaxX - partnerBoxX;
@@ -172,7 +212,7 @@ export function rectangleCreativeSvg(d: CreativesData): string {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
-  <defs>${backgroundDefs(d, idPrefix)}</defs>
+  <defs>${backgroundDefs(d, idPrefix, 'rect')}</defs>
   <rect width="${W}" height="${H}" fill="${backgroundFill(bg, idPrefix)}" />
   ${logo}
   ${divider}
@@ -196,14 +236,14 @@ export function squareCreativeSvg(d: CreativesData): string {
   const logo = heymaxLogo({
     transform: `translate(${heymaxX.toFixed(2)}, ${heymaxY.toFixed(2)})`,
     width: heymaxW,
-    heyFill: heyFill(bg),
+    heyFill: heyFill(bg, d),
     gradientId: `${idPrefix}-hmGrad`,
   });
 
   const dividerWidth = 674;
   const dividerX1 = (W - dividerWidth) / 2;
   const dividerX2 = dividerX1 + dividerWidth;
-  const divider = `<line x1="${dividerX1}" y1="${halfH}" x2="${dividerX2}" y2="${halfH}" stroke="${dividerColor(bg)}" stroke-width="1.5" />`;
+  const divider = `<line x1="${dividerX1}" y1="${halfH}" x2="${dividerX2}" y2="${halfH}" stroke="${dividerColor(bg, d)}" stroke-width="1.5" />`;
 
   const partnerBoxY = halfH + padding;
   const partnerBoxH = 280;
@@ -223,7 +263,7 @@ export function squareCreativeSvg(d: CreativesData): string {
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
-  <defs>${backgroundDefs(d, idPrefix)}</defs>
+  <defs>${backgroundDefs(d, idPrefix, 'square')}</defs>
   <rect width="${W}" height="${H}" fill="${backgroundFill(bg, idPrefix)}" />
   ${logo}
   ${divider}
