@@ -12,7 +12,6 @@ import {
   CARD_WIDTH,
   frontCardSvg,
   NAME_CARD_PLACEHOLDERS,
-  svgToPngBytes,
 } from '../lib/nameCard';
 import { useStore } from '../state/store';
 
@@ -95,13 +94,10 @@ export function NameCardView() {
         (card.name || 'name-card').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') ||
         'name-card';
 
-      const [frontBytes, backBytes] = await Promise.all([
-        svgToPngBytes(frontSvg, CARD_WIDTH, CARD_HEIGHT, 3),
-        svgToPngBytes(backSvg, CARD_WIDTH, CARD_HEIGHT, 3),
-      ]);
+      const enc = new TextEncoder();
       const zip = buildZip([
-        { name: `${safeName}-front.png`, data: frontBytes },
-        { name: `${safeName}-back.png`, data: backBytes },
+        { name: `${safeName}-front.svg`, data: enc.encode(frontSvg) },
+        { name: `${safeName}-back.svg`, data: enc.encode(backSvg) },
       ]);
       const blob = new Blob([zip as BlobPart], { type: 'application/zip' });
       const url = URL.createObjectURL(blob);
