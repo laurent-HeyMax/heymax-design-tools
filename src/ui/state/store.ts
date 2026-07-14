@@ -32,6 +32,19 @@ export interface ResultJob {
 export type ToolId = 'image-gen' | 'name-card' | 'creatives';
 export type ToolView = 'home' | ToolId;
 
+const TOOL_IDS: readonly ToolId[] = ['image-gen', 'name-card', 'creatives'];
+
+/** Deep link for the standalone web build: ?tool=name-card opens that tool directly. */
+function initialView(): ToolView {
+  try {
+    const tool = new URLSearchParams(window.location.search).get('tool');
+    if (tool && (TOOL_IDS as readonly string[]).includes(tool)) return tool as ToolId;
+  } catch {
+    /* not in a browser context */
+  }
+  return 'home';
+}
+
 export interface UiState {
   initialized: boolean;
   inFigma: boolean;
@@ -94,7 +107,7 @@ export interface UiState {
 export const useStore = create<UiState>((set, get) => ({
   initialized: false,
   inFigma: false,
-  view: 'home',
+  view: initialView(),
   tab: 'generate',
   settings: DEFAULT_SETTINGS,
 
