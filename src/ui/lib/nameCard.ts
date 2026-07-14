@@ -1,6 +1,13 @@
 import qrcode from 'qrcode-generator';
-import pjsVariableUrl from '../assets/fonts/PlusJakartaSans-Variable.woff2';
-import { HEYMAX_NATIVE_HEIGHT, HEYMAX_NATIVE_WIDTH, heymaxLogo } from './heymaxLogo';
+import pjsVariableUrl from '../assets/fonts/PlusJakartaSans-Variable.woff2?inline';
+import {
+  HEYMAX_MONOGRAM_HEIGHT,
+  HEYMAX_MONOGRAM_PATH,
+  HEYMAX_MONOGRAM_WIDTH,
+  HEYMAX_NATIVE_HEIGHT,
+  HEYMAX_NATIVE_WIDTH,
+  heymaxLogo,
+} from './heymaxLogo';
 
 export const CARD_WIDTH = 204;
 export const CARD_HEIGHT = 340;
@@ -18,23 +25,18 @@ export interface NameCardData {
   role: string;
   phone: string;
   email: string;
-  /** URL that gets encoded as a QR on the front of the card (e.g. a LinkedIn profile). */
+  /** URL that gets encoded as a QR on the info side of the card (e.g. a LinkedIn profile). */
   qrUrl: string;
-  backTagline: string;
-  /** Top of the linear background gradient. */
-  gradientStart: string;
-  /** Bottom of the linear background gradient. */
-  gradientEnd: string;
-  /** Bright radial glow anchored at bottom-center, layered on top of the linear gradient. */
-  gradientGlow: string;
-  /** 0–100. 50 = even top-to-bottom. >50 pushes the end color toward the bottom; <50 pushes it toward the top. */
-  gradientBalance: number;
-  /** 0–100. Controls how far up the radial glow reaches and how visible it is. */
-  gradientCurve: number;
-  /** 0–100. Controls how wide the radial glow spreads horizontally. */
-  gradientWidth: number;
-  /** 0–100. Intensity of the paper-grain noise overlay across the card. */
-  gradientGrain: number;
+  /** Brand tagline shown under the logo on the info side. */
+  tagline: string;
+  /** Office address shown at the bottom of the info side. */
+  address: string;
+  /** Website line shown under the address. */
+  website: string;
+  /** Flat background color of the statement ("I am …") side. */
+  frontBg: string;
+  /** Fill of the "Max" letters on the statement side. */
+  frontAccent: string;
 }
 
 export const NAME_CARD_PLACEHOLDERS = {
@@ -43,6 +45,8 @@ export const NAME_CARD_PLACEHOLDERS = {
   phone: '+65 1234 5678',
   email: 'name@heymax.ai',
   qrUrl: 'https://linkedin.com/in/your-handle',
+  address: '75 Ayer Rajah Crescent, #03–16, Singapore 139952',
+  website: 'Heymax.ai',
 } as const;
 
 export const DEFAULT_NAME_CARD: NameCardData = {
@@ -51,17 +55,17 @@ export const DEFAULT_NAME_CARD: NameCardData = {
   phone: '',
   email: '',
   qrUrl: '',
-  backTagline: 'Where frequent travellers engage with your brands daily',
-  gradientStart: '#130739',
-  gradientEnd: '#35149F',
-  gradientGlow: '#C12BDF',
-  gradientBalance: 58,
-  gradientCurve: 100,
-  gradientWidth: 72,
-  gradientGrain: 25,
+  tagline: 'Travel Sooner, Better, Smarter',
+  address: '75 Ayer Rajah Crescent, #03–16, Singapore 139952',
+  website: 'Heymax.ai',
+  frontBg: '#2F1F5E',
+  frontAccent: '#7D62A3',
 };
 
-function qrRects(text: string, x: number, y: number, size: number): string {
+const INK = '#2F1F5E';
+const PURPLE = '#7D62A3';
+
+function qrRects(text: string, x: number, y: number, size: number, fill = '#000000'): string {
   const qr = qrcode(0, 'M');
   qr.addData(text);
   qr.make();
@@ -74,7 +78,7 @@ function qrRects(text: string, x: number, y: number, size: number): string {
         const rx = (x + c * cell).toFixed(3);
         const ry = (y + r * cell).toFixed(3);
         const w = cell.toFixed(3);
-        rects.push(`<rect x="${rx}" y="${ry}" width="${w}" height="${w}" fill="#000000" />`);
+        rects.push(`<rect x="${rx}" y="${ry}" width="${w}" height="${w}" fill="${fill}" />`);
       }
     }
   }
@@ -127,169 +131,105 @@ function wrap(text: string, maxChars: number, maxLines: number): string[] {
   return truncated;
 }
 
-export function frontCardSvg(d: NameCardData, _opts: SvgOptions = {}): string {
-  const PAD = 16;
-  const logoWidth = 65;
+/** M-in-pill monogram mark (outline finish), centered on (cx, cy). `r` is the half-height. */
+function heymaxMark(cx: number, cy: number, r: number, color: string): string {
+  const h = r * 2;
+  const s = h / HEYMAX_MONOGRAM_HEIGHT;
+  const w = HEYMAX_MONOGRAM_WIDTH * s;
+  return `<g transform="translate(${(cx - w / 2).toFixed(2)}, ${(cy - h / 2).toFixed(2)}) scale(${s.toFixed(5)})"><path d="${HEYMAX_MONOGRAM_PATH}" fill="${color}" /></g>`;
+}
 
+/** Statement side — flat brand background, giant rotated wordmark and "I am {first name}". */
+export function frontCardSvg(d: NameCardData, _opts: SvgOptions = {}): string {
+  const firstName = clip((d.name || NAME_CARD_PLACEHOLDERS.name).trim().split(/\s+/)[0], 12);
+
+  const logoWidth = 255;
+  const logoBand = (logoWidth * HEYMAX_NATIVE_HEIGHT) / HEYMAX_NATIVE_WIDTH;
+  const bottomY = CARD_HEIGHT - 26;
+  const logoX = 36;
   const logo = heymaxLogo({
-    transform: `translate(${PAD}, ${PAD})`,
+    transform: `translate(${logoX}, ${bottomY}) rotate(-90)`,
     width: logoWidth,
-    heyFill: '#130739',
+    heyFill: '#C4B2D0',
+    maxFill: d.frontAccent,
     gradientId: 'hmFrontGrad',
   });
 
-  const dashed = (y: number) =>
-    `<line x1="0" y1="${y}" x2="${CARD_WIDTH}" y2="${y}" stroke="#D9D9D9" stroke-width="1" stroke-dasharray="5,3" />`;
+  const iAmX = logoX + logoBand + 32;
 
-  const qrSize = 64;
-  const qrTrimmed = d.qrUrl?.trim() || NAME_CARD_PLACEHOLDERS.qrUrl;
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${CARD_WIDTH}" height="${CARD_HEIGHT}" viewBox="0 0 ${CARD_WIDTH} ${CARD_HEIGHT}">
+  <defs><style>${FONT_FACE_BLOCK}</style></defs>
+  <rect width="${CARD_WIDTH}" height="${CARD_HEIGHT}" fill="${d.frontBg}" />
+  ${heymaxMark(28, 28, 10, '#FFFFFF')}
+  ${logo}
+  <text transform="translate(${iAmX}, ${bottomY}) rotate(-90)" font-family="${FONT_STACK}" font-weight="300" font-size="30" fill="#FFFFFF">I am ${escapeXml(firstName)}</text>
+</svg>`.trim();
+}
 
-  const nameLines = wrap(d.name || NAME_CARD_PLACEHOLDERS.name, 22, 2);
-  const roleLines = wrap(d.role || NAME_CARD_PLACEHOLDERS.role, 34, 2);
-  const nameBaseY = 72;
-  const nameLineHeight = 16;
-  const roleLineHeight = 11;
-  const extraNameShift = Math.max(0, nameLines.length - 1) * nameLineHeight;
-  const extraRoleShift = Math.max(0, roleLines.length - 1) * roleLineHeight;
-  const totalShift = extraNameShift + extraRoleShift;
-  const roleBaseY = nameBaseY + extraNameShift + 16;
+/** Info side — white card with centered logo + tagline, then name, role, QR, and contact details. */
+export function backCardSvg(d: NameCardData): string {
+  const PAD = 18;
 
-  const mobileY = 124 + totalShift;
-  const phoneY = mobileY + 18;
-  const emailLabelY = phoneY + 32;
-  const emailValueY = emailLabelY + 18;
-  const dashedBottomY = Math.max(220, emailValueY + 12);
-  const linkedinLabelY = dashedBottomY + 24;
-  const qrYDyn = Math.min(CARD_HEIGHT - PAD - qrSize, linkedinLabelY + 12);
+  const logoWidth = 104;
+  const logoHeight = (logoWidth * HEYMAX_NATIVE_HEIGHT) / HEYMAX_NATIVE_WIDTH;
+  const logoY = 34;
+  const logo = heymaxLogo({
+    transform: `translate(${(CARD_WIDTH - logoWidth) / 2}, ${logoY})`,
+    width: logoWidth,
+    heyFill: INK,
+    maxFill: INK,
+    gradientId: 'hmBackGrad',
+  });
+  const taglineY = logoY + logoHeight + 14;
 
-  const nameTspans = nameLines
-    .map((line, i) => `<tspan x="${PAD}" dy="${i === 0 ? 0 : nameLineHeight}">${escapeXml(line)}</tspan>`)
-    .join('');
-  const roleTspans = roleLines
-    .map((line, i) => `<tspan x="${PAD}" dy="${i === 0 ? 0 : roleLineHeight}">${escapeXml(line)}</tspan>`)
-    .join('');
+  const nameLines = wrap(d.name || NAME_CARD_PLACEHOLDERS.name, 18, 2);
+  const roleLines = wrap(d.role || NAME_CARD_PLACEHOLDERS.role, 32, 2);
+  const nameBaseY = 128;
+  const nameLineHeight = 20;
+  const roleLineHeight = 12;
+  const nameShift = Math.max(0, nameLines.length - 1) * nameLineHeight;
+  const roleBaseY = nameBaseY + nameShift + 17;
+  const roleShift = Math.max(0, roleLines.length - 1) * roleLineHeight;
 
-  const qrPlaced = qrRects(qrTrimmed, PAD, qrYDyn, qrSize);
+  const qrSize = 50;
+  const qrY = roleBaseY + roleShift + 10;
+  const qrPlaced = qrRects(d.qrUrl?.trim() || NAME_CARD_PLACEHOLDERS.qrUrl, PAD, qrY, qrSize, INK);
+
+  const phoneY = qrY + qrSize + 19;
+  const emailY = phoneY + 15;
+
+  const addressLines = wrap(d.address || NAME_CARD_PLACEHOLDERS.address, 34, 3);
+  const addressBaseY = emailY + 21;
+  const addressLineHeight = 10;
+  const websiteY =
+    addressBaseY + Math.max(0, addressLines.length - 1) * addressLineHeight + addressLineHeight;
+
+  const tspans = (lines: string[], x: number, lineHeight: number) =>
+    lines
+      .map((line, i) => `<tspan x="${x}" dy="${i === 0 ? 0 : lineHeight}">${escapeXml(line)}</tspan>`)
+      .join('');
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${CARD_WIDTH}" height="${CARD_HEIGHT}" viewBox="0 0 ${CARD_WIDTH} ${CARD_HEIGHT}">
   <defs><style>${FONT_FACE_BLOCK}</style></defs>
   <rect width="${CARD_WIDTH}" height="${CARD_HEIGHT}" fill="#FFFFFF" />
   ${logo}
-  ${dashed(40)}
+  <text x="${CARD_WIDTH / 2}" y="${taglineY}" font-family="${FONT_STACK}" font-weight="600" font-size="8.5" fill="${PURPLE}" text-anchor="middle">${escapeXml(clip(d.tagline || '', 40))}</text>
 
-  <text x="${PAD}" y="${nameBaseY}" font-family="${FONT_STACK}" font-weight="700" font-size="14" fill="#313131">${nameTspans}</text>
-  <text x="${PAD}" y="${roleBaseY}" font-family="${FONT_STACK}" font-weight="400" font-size="9" fill="#808080">${roleTspans}</text>
+  <text x="${PAD}" y="${nameBaseY}" font-family="${FONT_STACK}" font-weight="600" font-size="17" fill="${INK}">${tspans(nameLines, PAD, nameLineHeight)}</text>
+  <text x="${PAD}" y="${roleBaseY}" font-family="${FONT_STACK}" font-weight="500" font-size="10" fill="${PURPLE}">${tspans(roleLines, PAD, roleLineHeight)}</text>
 
-  <text x="${PAD}" y="${mobileY}" font-family="${FONT_STACK}" font-weight="500" font-size="8" fill="#A3A3A3" letter-spacing="1">MOBILE</text>
-  <text x="${PAD}" y="${phoneY}" font-family="${FONT_STACK}" font-weight="600" font-size="11" fill="#313131">${escapeXml(clip(d.phone || NAME_CARD_PLACEHOLDERS.phone, 26))}</text>
-
-  <text x="${PAD}" y="${emailLabelY}" font-family="${FONT_STACK}" font-weight="500" font-size="8" fill="#A3A3A3" letter-spacing="1">EMAIL</text>
-  <text x="${PAD}" y="${emailValueY}" font-family="${FONT_STACK}" font-weight="600" font-size="11" fill="#313131">${escapeXml(clip(d.email || NAME_CARD_PLACEHOLDERS.email, 26))}</text>
-
-  ${dashed(dashedBottomY)}
-
-  <text x="${PAD}" y="${linkedinLabelY}" font-family="${FONT_STACK}" font-weight="500" font-size="8" fill="#A3A3A3" letter-spacing="1">LINKEDIN</text>
   ${qrPlaced}
+
+  <text x="${PAD}" y="${phoneY}" font-family="${FONT_STACK}" font-weight="400" font-size="10" fill="#2F1F5E">t: ${escapeXml(clip(d.phone || NAME_CARD_PLACEHOLDERS.phone, 26))}</text>
+  <text x="${PAD}" y="${emailY}" font-family="${FONT_STACK}" font-weight="400" font-size="10" fill="#2F1F5E">e: ${escapeXml(clip(d.email || NAME_CARD_PLACEHOLDERS.email, 26))}</text>
+
+  <text x="${PAD}" y="${addressBaseY}" font-family="${FONT_STACK}" font-weight="400" font-size="7.5" fill="#7D62A3">${tspans(addressLines, PAD, addressLineHeight)}</text>
+  <text x="${PAD}" y="${websiteY}" font-family="${FONT_STACK}" font-weight="400" font-size="7.5" fill="#7D62A3">${escapeXml(clip(d.website || '', 30))}</text>
+
+  ${heymaxMark(CARD_WIDTH - 26, CARD_HEIGHT - 26, 9, INK)}
 </svg>`.trim();
-}
-
-export function backCardSvg(d: NameCardData): string {
-  const gradId = 'ncGrad';
-  const PAD = 20;
-
-  const tagline = escapeXml(d.backTagline || '');
-
-  // Rotated 90° clockwise so the logo reads top-to-bottom on the back of the card.
-  const backLogoWidth = 180;
-  const backLogoHeight = (backLogoWidth * HEYMAX_NATIVE_HEIGHT) / HEYMAX_NATIVE_WIDTH;
-  const logo = heymaxLogo({
-    transform: `translate(${(PAD + backLogoHeight).toFixed(2)}, ${PAD}) rotate(90)`,
-    width: backLogoWidth,
-    heyFill: '#FFFFFF',
-    gradientId: 'hmBackGrad',
-  });
-
-  const taglineFontSize = 12;
-  const taglineLineHeight = 17;
-  const lines = layoutTagline(tagline);
-  const taglineBottomPad = 28;
-  const firstBaselineY = CARD_HEIGHT - taglineBottomPad - (lines.length - 1) * taglineLineHeight;
-
-  const balance = Math.max(0, Math.min(100, d.gradientBalance ?? 50));
-  const stopStart = Math.max(0, (balance - 50) * 2);
-  const stopEnd = Math.min(100, balance * 2);
-  const curve = Math.max(0, Math.min(100, d.gradientCurve ?? 0));
-  const curveStrength = curve / 100;
-
-  // Radial spotlight: wide and short ellipse anchored at the bottom-center.
-  // We use a unit-radius circle and stretch it via gradientTransform — browsers
-  // don't reliably honor rx/ry on <radialGradient> but they all support transforms.
-  const widthStrength = Math.max(0, Math.min(100, d.gradientWidth ?? 70)) / 100;
-  const grainStrength = Math.max(0, Math.min(100, d.gradientGrain ?? 50)) / 100;
-  const radialCx = CARD_WIDTH / 2;
-  const radialCy = CARD_HEIGHT;
-  const radialRxPx = 35 + widthStrength * 170;
-  const radialRyPx = (14 + curveStrength * 24) * (CARD_HEIGHT / 100);
-  const radialOpacity = Math.min(1, 0.2 + curveStrength * 0.7);
-  const radialId = `${gradId}-radial`;
-  const grainId = `${gradId}-grain`;
-  const grainAlpha = (grainStrength * 0.32).toFixed(3);
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${CARD_WIDTH}" height="${CARD_HEIGHT}" viewBox="0 0 ${CARD_WIDTH} ${CARD_HEIGHT}">
-  <defs>
-    <style>${FONT_FACE_BLOCK}</style>
-    <linearGradient id="${gradId}" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="${stopStart}%" stop-color="${d.gradientStart}" />
-      <stop offset="${stopEnd}%" stop-color="${d.gradientEnd}" />
-    </linearGradient>
-    <radialGradient
-      id="${radialId}"
-      cx="${radialCx}"
-      cy="${radialCy}"
-      r="1"
-      fx="${radialCx}"
-      fy="${radialCy}"
-      gradientUnits="userSpaceOnUse"
-      gradientTransform="translate(${radialCx} ${radialCy}) scale(${radialRxPx.toFixed(2)} ${radialRyPx.toFixed(2)}) translate(${-radialCx} ${-radialCy})"
-    >
-      <stop offset="0%" stop-color="${d.gradientGlow}" stop-opacity="1" />
-      <stop offset="65%" stop-color="${d.gradientGlow}" stop-opacity="0.5" />
-      <stop offset="100%" stop-color="${d.gradientGlow}" stop-opacity="0" />
-    </radialGradient>
-    <filter id="${grainId}" x="0" y="0" width="100%" height="100%">
-      <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="4" stitchTiles="stitch" />
-      <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 ${grainAlpha} 0" />
-    </filter>
-  </defs>
-  <rect width="${CARD_WIDTH}" height="${CARD_HEIGHT}" fill="url(#${gradId})" />
-  ${radialOpacity > 0 ? `<rect width="${CARD_WIDTH}" height="${CARD_HEIGHT}" fill="url(#${radialId})" opacity="${radialOpacity.toFixed(2)}" />` : ''}
-  <rect width="${CARD_WIDTH}" height="${CARD_HEIGHT}" filter="url(#${grainId})" />
-  ${logo}
-  <text x="${CARD_WIDTH - PAD}" y="${firstBaselineY}" font-family="${FONT_STACK}" font-weight="600" font-size="${taglineFontSize}" fill="#FFFFFF" text-anchor="end">
-    ${lines.map((line, i) => `<tspan x="${CARD_WIDTH - PAD}" dy="${i === 0 ? 0 : taglineLineHeight}">${line}</tspan>`).join('')}
-  </text>
-</svg>`.trim();
-}
-
-function layoutTagline(text: string): string[] {
-  if (!text) return [];
-  const words = text.split(/\s+/);
-  const lines: string[] = [];
-  let current = '';
-  const maxChars = 22;
-  for (const w of words) {
-    const next = current ? current + ' ' + w : w;
-    if (next.length > maxChars && current) {
-      lines.push(current);
-      current = w;
-    } else {
-      current = next;
-    }
-  }
-  if (current) lines.push(current);
-  return lines;
 }
 
 let crcTable: Uint32Array | undefined;

@@ -4,7 +4,6 @@ import { Button } from '../components/ui/Button';
 import { Input, Label } from '../components/ui/Input';
 import { ResizeHandle } from '../components/ui/ResizeHandle';
 import { Section } from '../components/ui/Section';
-import { Slider } from '../components/ui/Slider';
 import { sendToMain } from '../lib/messaging';
 import {
   backCardSvg,
@@ -153,7 +152,7 @@ export function NameCardView() {
                 alt="Front of name card"
                 width={CARD_WIDTH}
                 height={CARD_HEIGHT}
-                className="shadow-soft rounded-sm bg-white"
+                className="shadow-soft rounded-sm"
               />
               <span className="text-2xs text-text-faint">Front</span>
             </div>
@@ -215,63 +214,42 @@ export function NameCardView() {
           </div>
         </Section>
 
-        <Section title="Back gradient" defaultOpen={false} collapsible>
+        <Section title="Branding" defaultOpen={false} collapsible>
           <div className="space-y-2.5">
-            <div className="flex items-end gap-2">
-              <ColorPicker
-                label="Top"
-                value={card.gradientStart}
-                onChange={(gradientStart) => setNameCard({ gradientStart })}
-              />
-              <ColorPicker
-                label="Bottom"
-                value={card.gradientEnd}
-                onChange={(gradientEnd) => setNameCard({ gradientEnd })}
-              />
-            </div>
-            <ColorPicker
-              label="Glow"
-              value={card.gradientGlow}
-              onChange={(gradientGlow) => setNameCard({ gradientGlow })}
-            />
-            <Slider
-              label="Balance (top ↔ bottom)"
-              value={card.gradientBalance}
-              min={0}
-              max={100}
-              onChange={(gradientBalance) => setNameCard({ gradientBalance })}
-              suffix="%"
-            />
-            <Slider
-              label="Glow height"
-              value={card.gradientCurve}
-              min={0}
-              max={100}
-              onChange={(gradientCurve) => setNameCard({ gradientCurve })}
-              suffix="%"
-            />
-            <Slider
-              label="Glow width"
-              value={card.gradientWidth}
-              min={0}
-              max={100}
-              onChange={(gradientWidth) => setNameCard({ gradientWidth })}
-              suffix="%"
-            />
-            <Slider
-              label="Grain"
-              value={card.gradientGrain}
-              min={0}
-              max={100}
-              onChange={(gradientGrain) => setNameCard({ gradientGrain })}
-              suffix="%"
-            />
             <div>
               <Label>Tagline</Label>
               <Input
-                value={card.backTagline}
-                onChange={(e) => setNameCard({ backTagline: e.target.value })}
-                placeholder="Where frequent travellers engage with your brands daily"
+                value={card.tagline}
+                onChange={(e) => setNameCard({ tagline: e.target.value })}
+                placeholder="Travel Sooner, Better, Smarter"
+              />
+            </div>
+            <div>
+              <Label>Address</Label>
+              <Input
+                value={card.address}
+                onChange={(e) => setNameCard({ address: e.target.value })}
+                placeholder={NAME_CARD_PLACEHOLDERS.address}
+              />
+            </div>
+            <div>
+              <Label>Website</Label>
+              <Input
+                value={card.website}
+                onChange={(e) => setNameCard({ website: e.target.value })}
+                placeholder={NAME_CARD_PLACEHOLDERS.website}
+              />
+            </div>
+            <div className="flex items-end gap-2">
+              <ColorPicker
+                label="Front background"
+                value={card.frontBg}
+                onChange={(frontBg) => setNameCard({ frontBg })}
+              />
+              <ColorPicker
+                label="Max accent"
+                value={card.frontAccent}
+                onChange={(frontAccent) => setNameCard({ frontAccent })}
               />
             </div>
           </div>
