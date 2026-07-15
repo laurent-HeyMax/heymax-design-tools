@@ -28,6 +28,9 @@ const FONT_FACE_BLOCK = `
 export interface NameCardData {
   name: string;
   role: string;
+  /** Manual two-line title: when enabled, `role` is line 1 and `role2` is line 2 (no auto-wrap). */
+  roleSplit: boolean;
+  role2: string;
   phone: string;
   email: string;
   /** URL encoded as a QR on the info side. Defaults to the HeyMax membership page; can be swapped for e.g. a LinkedIn profile. */
@@ -57,6 +60,8 @@ export const NAME_CARD_PLACEHOLDERS = {
 export const DEFAULT_NAME_CARD: NameCardData = {
   name: '',
   role: '',
+  roleSplit: false,
+  role2: '',
   phone: '',
   email: '',
   qrUrl: '',
@@ -187,7 +192,9 @@ export function backCardSvg(d: NameCardData): string {
   const showAddress = d.showAddress !== false;
 
   const nameLines = wrap(d.name || NAME_CARD_PLACEHOLDERS.name, 18, 2);
-  const roleLines = wrap(d.role || NAME_CARD_PLACEHOLDERS.role, 28, 2);
+  const roleLines = d.roleSplit
+    ? [d.role || NAME_CARD_PLACEHOLDERS.role, d.role2].filter(Boolean).map((l) => clip(l, 30))
+    : wrap(d.role || NAME_CARD_PLACEHOLDERS.role, 28, 2);
   const nameLineHeight = 20;
   const roleLineHeight = 12;
   const nameShift = Math.max(0, nameLines.length - 1) * nameLineHeight;

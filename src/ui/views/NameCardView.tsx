@@ -184,6 +184,22 @@ export function NameCardView() {
                 placeholder={NAME_CARD_PLACEHOLDERS.role}
               />
             </div>
+            <Switch
+              checked={card.roleSplit === true}
+              onChange={(roleSplit) => setNameCard({ roleSplit })}
+              label="Split title in two lines"
+              description="Choose where the title breaks"
+            />
+            {card.roleSplit === true && (
+              <div>
+                <Label>Role — line 2</Label>
+                <Input
+                  value={card.role2}
+                  onChange={(e) => setNameCard({ role2: e.target.value })}
+                  placeholder="Second line of your title"
+                />
+              </div>
+            )}
             <div>
               <Label>Phone number</Label>
               <Input
