@@ -8,6 +8,7 @@ import {
   HEYMAX_NATIVE_WIDTH,
   heymaxLogo,
 } from './heymaxLogo';
+import { logoLine } from './logoLine';
 
 export const CARD_WIDTH = 204;
 export const CARD_HEIGHT = 340;
@@ -27,8 +28,6 @@ export interface NameCardData {
   email: string;
   /** URL that gets encoded as a QR on the info side of the card (e.g. a LinkedIn profile). */
   qrUrl: string;
-  /** Brand tagline shown under the logo on the info side. */
-  tagline: string;
   /** Office address shown at the bottom of the info side. */
   address: string;
   /** Website line shown under the address. */
@@ -55,7 +54,6 @@ export const DEFAULT_NAME_CARD: NameCardData = {
   phone: '',
   email: '',
   qrUrl: '',
-  tagline: 'Travel Sooner, Better, Smarter',
   address: '75 Ayer Rajah Crescent, #03–16, Singapore 139952',
   website: 'Heymax.ai',
   frontBg: '#2F1F5E',
@@ -167,21 +165,17 @@ export function frontCardSvg(d: NameCardData, _opts: SvgOptions = {}): string {
 </svg>`.trim();
 }
 
-/** Info side — white card with centered logo + tagline, then name, role, QR, and contact details. */
+/** Info side — white card with the logo lockup, then name, role, QR, and contact details. */
 export function backCardSvg(d: NameCardData): string {
   const PAD = 18;
 
-  const logoWidth = 104;
-  const logoHeight = (logoWidth * HEYMAX_NATIVE_HEIGHT) / HEYMAX_NATIVE_WIDTH;
-  const logoY = 34;
-  const logo = heymaxLogo({
+  const logoWidth = 130;
+  const logoY = 32;
+  const logo = logoLine({
     transform: `translate(${(CARD_WIDTH - logoWidth) / 2}, ${logoY})`,
     width: logoWidth,
-    heyFill: INK,
-    maxFill: INK,
-    gradientId: 'hmBackGrad',
+    fill: INK,
   });
-  const taglineY = logoY + logoHeight + 14;
 
   const nameLines = wrap(d.name || NAME_CARD_PLACEHOLDERS.name, 18, 2);
   const roleLines = wrap(d.role || NAME_CARD_PLACEHOLDERS.role, 32, 2);
@@ -215,7 +209,6 @@ export function backCardSvg(d: NameCardData): string {
   <defs><style>${FONT_FACE_BLOCK}</style></defs>
   <rect width="${CARD_WIDTH}" height="${CARD_HEIGHT}" fill="#FFFFFF" />
   ${logo}
-  <text x="${CARD_WIDTH / 2}" y="${taglineY}" font-family="${FONT_STACK}" font-weight="600" font-size="8.5" fill="${PURPLE}" text-anchor="middle">${escapeXml(clip(d.tagline || '', 40))}</text>
 
   <text x="${PAD}" y="${nameBaseY}" font-family="${FONT_STACK}" font-weight="600" font-size="17" fill="${INK}">${tspans(nameLines, PAD, nameLineHeight)}</text>
   <text x="${PAD}" y="${roleBaseY}" font-family="${FONT_STACK}" font-weight="500" font-size="10" fill="${PURPLE}">${tspans(roleLines, PAD, roleLineHeight)}</text>

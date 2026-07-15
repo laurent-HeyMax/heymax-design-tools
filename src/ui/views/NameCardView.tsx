@@ -213,14 +213,6 @@ export function NameCardView() {
         <Section title="Branding" defaultOpen={false} collapsible>
           <div className="space-y-2.5">
             <div>
-              <Label>Tagline</Label>
-              <Input
-                value={card.tagline}
-                onChange={(e) => setNameCard({ tagline: e.target.value })}
-                placeholder="Travel Sooner, Better, Smarter"
-              />
-            </div>
-            <div>
               <Label>Address</Label>
               <Input
                 value={card.address}
