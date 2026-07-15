@@ -201,7 +201,7 @@ export function NameCardView() {
               />
             </div>
             <div>
-              <Label>LinkedIn</Label>
+              <Label>QR link</Label>
               <Input
                 value={card.qrUrl}
                 onChange={(e) => setNameCard({ qrUrl: e.target.value })}

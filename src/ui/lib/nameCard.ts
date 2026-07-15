@@ -30,7 +30,7 @@ export interface NameCardData {
   role: string;
   phone: string;
   email: string;
-  /** URL that gets encoded as a QR on the info side of the card (e.g. a LinkedIn profile). */
+  /** URL encoded as a QR on the info side. Defaults to the HeyMax membership page; can be swapped for e.g. a LinkedIn profile. */
   qrUrl: string;
   /** Office address shown at the bottom of the info side. */
   address: string;
@@ -49,7 +49,7 @@ export const NAME_CARD_PLACEHOLDERS = {
   role: 'This is your job title',
   phone: '+65 1234 5678',
   email: 'name@heymax.ai',
-  qrUrl: 'https://linkedin.com/in/your-handle',
+  qrUrl: 'https://heymax.ai/membership',
   address: '75 Ayer Rajah Crescent, #03–16, Singapore 139952',
   website: 'Heymax.ai',
 } as const;
