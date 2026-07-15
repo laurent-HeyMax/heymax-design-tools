@@ -169,8 +169,8 @@ export function frontCardSvg(d: NameCardData, _opts: SvgOptions = {}): string {
 export function backCardSvg(d: NameCardData): string {
   const PAD = 18;
 
-  const logoWidth = 130;
-  const logoY = 32;
+  const logoWidth = 97.5;
+  const logoY = 36;
   const logo = logoLine({
     transform: `translate(${(CARD_WIDTH - logoWidth) / 2}, ${logoY})`,
     width: logoWidth,
