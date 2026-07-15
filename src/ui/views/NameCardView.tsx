@@ -255,18 +255,11 @@ export function NameCardView() {
                 </div>
               </>
             )}
-            <div className="flex items-end gap-2">
-              <ColorPicker
-                label="Front background"
-                value={card.frontBg}
-                onChange={(frontBg) => setNameCard({ frontBg })}
-              />
-              <ColorPicker
-                label="Max accent"
-                value={card.frontAccent}
-                onChange={(frontAccent) => setNameCard({ frontAccent })}
-              />
-            </div>
+            <ColorPicker
+              label="Front background"
+              value={card.frontBg}
+              onChange={(frontBg) => setNameCard({ frontBg })}
+            />
           </div>
         </Section>
       </main>

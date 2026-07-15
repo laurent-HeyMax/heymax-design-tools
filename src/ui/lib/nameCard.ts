@@ -41,10 +41,8 @@ export interface NameCardData {
   website: string;
   /** Show the address + website block on the info side. */
   showAddress: boolean;
-  /** Flat background color of the statement ("I am …") side. */
+  /** Flat background color of the statement ("I am …") side. The "Max" letters derive from it at 80% value. */
   frontBg: string;
-  /** Fill of the "Max" letters on the statement side. */
-  frontAccent: string;
 }
 
 export const NAME_CARD_PLACEHOLDERS = {
@@ -69,8 +67,17 @@ export const DEFAULT_NAME_CARD: NameCardData = {
   website: 'Heymax.ai',
   showAddress: true,
   frontBg: '#2F1F5E',
-  frontAccent: '#7D62A3',
 };
+
+/** Multiply each RGB channel by `f` — e.g. f=0.8 gives the color at 80% of its value. */
+function scaleHex(hex: string, f: number): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  const ch = (v: number) => Math.max(0, Math.min(255, Math.round(v * f)));
+  const rgb = (ch((n >> 16) & 255) << 16) | (ch((n >> 8) & 255) << 8) | ch(n & 255);
+  return `#${rgb.toString(16).padStart(6, '0').toUpperCase()}`;
+}
 
 const INK = '#2F1F5E';
 const PURPLE = '#7D62A3';
@@ -161,7 +168,7 @@ export function frontCardSvg(d: NameCardData, _opts: SvgOptions = {}): string {
     transform: `translate(${logoX}, ${bottomY}) rotate(-90)`,
     width: logoWidth,
     heyFill: '#C4B2D0',
-    maxFill: d.frontAccent,
+    maxFill: scaleHex(d.frontBg, 0.8),
     gradientId: 'hmFrontGrad',
   });
 
@@ -171,7 +178,7 @@ export function frontCardSvg(d: NameCardData, _opts: SvgOptions = {}): string {
 <svg xmlns="http://www.w3.org/2000/svg" width="${CARD_WIDTH}" height="${CARD_HEIGHT}" viewBox="0 0 ${CARD_WIDTH} ${CARD_HEIGHT}">
   <defs><style>${FONT_FACE_BLOCK}</style></defs>
   <rect width="${CARD_WIDTH}" height="${CARD_HEIGHT}" fill="${d.frontBg}" />
-  ${heymaxMark(28, 28, 10, '#FFFFFF')}
+  <g transform="rotate(-90 28 28)">${heymaxMark(28, 28, 10, '#FFFFFF')}</g>
   ${logo}
   <text transform="translate(${iAmX}, ${bottomY}) rotate(-90)" font-family="${FONT_STACK}" font-weight="300" font-size="30" fill="#FFFFFF">I am ${escapeXml(firstName)}</text>
 </svg>`.trim();
