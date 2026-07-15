@@ -4,6 +4,7 @@ import { Button } from '../components/ui/Button';
 import { Input, Label } from '../components/ui/Input';
 import { ResizeHandle } from '../components/ui/ResizeHandle';
 import { Section } from '../components/ui/Section';
+import { Switch } from '../components/ui/Switch';
 import { sendToMain } from '../lib/messaging';
 import {
   backCardSvg,
@@ -212,22 +213,32 @@ export function NameCardView() {
 
         <Section title="Branding" defaultOpen={false} collapsible>
           <div className="space-y-2.5">
-            <div>
-              <Label>Address</Label>
-              <Input
-                value={card.address}
-                onChange={(e) => setNameCard({ address: e.target.value })}
-                placeholder={NAME_CARD_PLACEHOLDERS.address}
-              />
-            </div>
-            <div>
-              <Label>Website</Label>
-              <Input
-                value={card.website}
-                onChange={(e) => setNameCard({ website: e.target.value })}
-                placeholder={NAME_CARD_PLACEHOLDERS.website}
-              />
-            </div>
+            <Switch
+              checked={card.showAddress !== false}
+              onChange={(showAddress) => setNameCard({ showAddress })}
+              label="Show address"
+              description="Address + website block on the back"
+            />
+            {card.showAddress !== false && (
+              <>
+                <div>
+                  <Label>Address</Label>
+                  <Input
+                    value={card.address}
+                    onChange={(e) => setNameCard({ address: e.target.value })}
+                    placeholder={NAME_CARD_PLACEHOLDERS.address}
+                  />
+                </div>
+                <div>
+                  <Label>Website</Label>
+                  <Input
+                    value={card.website}
+                    onChange={(e) => setNameCard({ website: e.target.value })}
+                    placeholder={NAME_CARD_PLACEHOLDERS.website}
+                  />
+                </div>
+              </>
+            )}
             <div className="flex items-end gap-2">
               <ColorPicker
                 label="Front background"

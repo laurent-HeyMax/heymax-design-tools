@@ -8,7 +8,11 @@ import {
   HEYMAX_NATIVE_WIDTH,
   heymaxLogo,
 } from './heymaxLogo';
-import { logoLine } from './logoLine';
+import {
+  LOGO_LINE_NATIVE_HEIGHT,
+  LOGO_LINE_NATIVE_WIDTH,
+  logoLine,
+} from './logoLine';
 
 export const CARD_WIDTH = 204;
 export const CARD_HEIGHT = 340;
@@ -32,6 +36,8 @@ export interface NameCardData {
   address: string;
   /** Website line shown under the address. */
   website: string;
+  /** Show the address + website block on the info side. */
+  showAddress: boolean;
   /** Flat background color of the statement ("I am …") side. */
   frontBg: string;
   /** Fill of the "Max" letters on the statement side. */
@@ -56,6 +62,7 @@ export const DEFAULT_NAME_CARD: NameCardData = {
   qrUrl: '',
   address: '75 Ayer Rajah Crescent, #03–16, Singapore 139952',
   website: 'Heymax.ai',
+  showAddress: true,
   frontBg: '#2F1F5E',
   frontAccent: '#7D62A3',
 };
@@ -177,27 +184,45 @@ export function backCardSvg(d: NameCardData): string {
     fill: INK,
   });
 
+  const showAddress = d.showAddress !== false;
+
   const nameLines = wrap(d.name || NAME_CARD_PLACEHOLDERS.name, 18, 2);
-  const roleLines = wrap(d.role || NAME_CARD_PLACEHOLDERS.role, 32, 2);
-  const nameBaseY = 128;
+  const roleLines = wrap(d.role || NAME_CARD_PLACEHOLDERS.role, 28, 2);
   const nameLineHeight = 20;
   const roleLineHeight = 12;
   const nameShift = Math.max(0, nameLines.length - 1) * nameLineHeight;
-  const roleBaseY = nameBaseY + nameShift + 17;
   const roleShift = Math.max(0, roleLines.length - 1) * roleLineHeight;
 
   const qrSize = 50;
-  const qrY = roleBaseY + roleShift + 10;
-  const qrPlaced = qrRects(d.qrUrl?.trim() || NAME_CARD_PLACEHOLDERS.qrUrl, PAD, qrY, qrSize, INK);
-
-  const phoneY = qrY + qrSize + 19;
-  const emailY = phoneY + 15;
-
   const addressLines = wrap(d.address || NAME_CARD_PLACEHOLDERS.address, 34, 3);
-  const addressBaseY = emailY + 21;
   const addressLineHeight = 10;
-  const websiteY =
-    addressBaseY + Math.max(0, addressLines.length - 1) * addressLineHeight + addressLineHeight;
+
+  // Offsets relative to the first name baseline, so the whole block can be centered.
+  const roleRel = nameShift + 17;
+  const qrRel = roleRel + roleShift + 10;
+  const phoneRel = qrRel + qrSize + 19;
+  const emailRel = phoneRel + 15;
+  const addressRel = emailRel + 21;
+  const websiteRel = addressRel + Math.max(0, addressLines.length - 1) * addressLineHeight + addressLineHeight;
+
+  const blockTopRel = -13;
+  const blockBottomRel = (showAddress ? websiteRel : emailRel) + 3;
+
+  const regionTop = logoY + (logoWidth * LOGO_LINE_NATIVE_HEIGHT) / LOGO_LINE_NATIVE_WIDTH + 8;
+  const regionBottom = CARD_HEIGHT - 42;
+  const nameBaseY = Math.max(
+    regionTop - blockTopRel,
+    regionTop + (regionBottom - regionTop - (blockBottomRel - blockTopRel)) / 2 - blockTopRel,
+  );
+
+  const roleBaseY = nameBaseY + roleRel;
+  const qrY = nameBaseY + qrRel;
+  const phoneY = nameBaseY + phoneRel;
+  const emailY = nameBaseY + emailRel;
+  const addressBaseY = nameBaseY + addressRel;
+  const websiteY = nameBaseY + websiteRel;
+
+  const qrPlaced = qrRects(d.qrUrl?.trim() || NAME_CARD_PLACEHOLDERS.qrUrl, PAD, qrY, qrSize, INK);
 
   const tspans = (lines: string[], x: number, lineHeight: number) =>
     lines
@@ -218,8 +243,12 @@ export function backCardSvg(d: NameCardData): string {
   <text x="${PAD}" y="${phoneY}" font-family="${FONT_STACK}" font-weight="400" font-size="10" fill="#2F1F5E">t: ${escapeXml(clip(d.phone || NAME_CARD_PLACEHOLDERS.phone, 26))}</text>
   <text x="${PAD}" y="${emailY}" font-family="${FONT_STACK}" font-weight="400" font-size="10" fill="#2F1F5E">e: ${escapeXml(clip(d.email || NAME_CARD_PLACEHOLDERS.email, 26))}</text>
 
-  <text x="${PAD}" y="${addressBaseY}" font-family="${FONT_STACK}" font-weight="400" font-size="7.5" fill="#7D62A3">${tspans(addressLines, PAD, addressLineHeight)}</text>
-  <text x="${PAD}" y="${websiteY}" font-family="${FONT_STACK}" font-weight="400" font-size="7.5" fill="#7D62A3">${escapeXml(clip(d.website || '', 30))}</text>
+  ${
+    showAddress
+      ? `<text x="${PAD}" y="${addressBaseY}" font-family="${FONT_STACK}" font-weight="400" font-size="7.5" fill="${INK}">${tspans(addressLines, PAD, addressLineHeight)}</text>
+  <text x="${PAD}" y="${websiteY}" font-family="${FONT_STACK}" font-weight="400" font-size="7.5" fill="${INK}">${escapeXml(clip(d.website || '', 30))}</text>`
+      : ''
+  }
 
   ${heymaxMark(CARD_WIDTH - 26, CARD_HEIGHT - 26, 9, INK)}
 </svg>`.trim();
