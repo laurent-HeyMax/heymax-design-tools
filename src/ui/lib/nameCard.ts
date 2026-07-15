@@ -69,16 +69,6 @@ export const DEFAULT_NAME_CARD: NameCardData = {
   frontBg: '#2F1F5E',
 };
 
-/** Multiply each RGB channel by `f` — e.g. f=0.8 gives the color at 80% of its value. */
-function scaleHex(hex: string, f: number): string {
-  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
-  if (!m) return hex;
-  const n = parseInt(m[1], 16);
-  const ch = (v: number) => Math.max(0, Math.min(255, Math.round(v * f)));
-  const rgb = (ch((n >> 16) & 255) << 16) | (ch((n >> 8) & 255) << 8) | ch(n & 255);
-  return `#${rgb.toString(16).padStart(6, '0').toUpperCase()}`;
-}
-
 const INK = '#2F1F5E';
 const PURPLE = '#7D62A3';
 
@@ -168,7 +158,7 @@ export function frontCardSvg(d: NameCardData, _opts: SvgOptions = {}): string {
     transform: `translate(${logoX}, ${bottomY}) rotate(-90)`,
     width: logoWidth,
     heyFill: '#C4B2D0',
-    maxFill: scaleHex(d.frontBg, 0.8),
+    maxFill: '#31008B',
     gradientId: 'hmFrontGrad',
   });
 
