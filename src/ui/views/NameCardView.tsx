@@ -9,8 +9,8 @@ import { sendToMain } from '../lib/messaging';
 import {
   backCardSvg,
   buildZip,
-  CARD_HEIGHT,
-  CARD_WIDTH,
+  SHEET_HEIGHT,
+  SHEET_WIDTH,
   frontCardSvg,
   NAME_CARD_PLACEHOLDERS,
 } from '../lib/nameCard';
@@ -78,8 +78,8 @@ export function NameCardView() {
     sendToMain({
       type: 'add-svgs',
       items: [
-        { svg: frontSvg, label: 'Name Card — Front', width: CARD_WIDTH, height: CARD_HEIGHT },
-        { svg: backSvg, label: 'Name Card — Back', width: CARD_WIDTH, height: CARD_HEIGHT },
+        { svg: frontSvg, label: 'Name Card — Front', width: SHEET_WIDTH, height: SHEET_HEIGHT },
+        { svg: backSvg, label: 'Name Card — Back', width: SHEET_WIDTH, height: SHEET_HEIGHT },
       ],
     });
     window.setTimeout(() => {
@@ -147,8 +147,8 @@ export function NameCardView() {
               <img
                 src={frontPreview}
                 alt="Front of name card"
-                width={CARD_WIDTH}
-                height={CARD_HEIGHT}
+                width={Math.round(SHEET_WIDTH)}
+                height={Math.round(SHEET_HEIGHT)}
                 className="shadow-soft rounded-sm"
               />
               <span className="text-2xs text-text-faint">Front</span>
@@ -157,8 +157,8 @@ export function NameCardView() {
               <img
                 src={backPreview}
                 alt="Back of name card"
-                width={CARD_WIDTH}
-                height={CARD_HEIGHT}
+                width={Math.round(SHEET_WIDTH)}
+                height={Math.round(SHEET_HEIGHT)}
                 className="shadow-soft rounded-sm"
               />
               <span className="text-2xs text-text-faint">Back</span>

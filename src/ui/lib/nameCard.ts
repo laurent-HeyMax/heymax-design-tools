@@ -14,8 +14,16 @@ import {
   logoLine,
 } from './logoLine';
 
-export const CARD_WIDTH = 204;
-export const CARD_HEIGHT = 340;
+/** Print spec: 90mm × 54mm trim (portrait: 54 wide × 90 tall), 1.5mm bleed each side → 93mm × 57mm. */
+const MM = 96 / 25.4;
+export const TRIM_WIDTH_MM = 54;
+export const TRIM_HEIGHT_MM = 90;
+export const BLEED_MM = 1.5;
+export const CARD_WIDTH = TRIM_WIDTH_MM * MM;
+export const CARD_HEIGHT = TRIM_HEIGHT_MM * MM;
+const BLEED = BLEED_MM * MM;
+export const SHEET_WIDTH = CARD_WIDTH + BLEED * 2;
+export const SHEET_HEIGHT = CARD_HEIGHT + BLEED * 2;
 
 const FONT_FACE_BLOCK = `
     @font-face {
@@ -66,7 +74,7 @@ export const DEFAULT_NAME_CARD: NameCardData = {
   address: '75 Ayer Rajah Crescent, #03–16, Singapore 139952',
   website: 'Heymax.ai',
   showAddress: true,
-  frontBg: '#2F1F5E',
+  frontBg: '#160F5A',
 };
 
 const INK = '#2F1F5E';
@@ -138,6 +146,36 @@ function wrap(text: string, maxChars: number, maxLines: number): string[] {
   return truncated;
 }
 
+const px = (v: number) => v.toFixed(2);
+
+/**
+ * Wraps card content in a print-ready sheet: bleed background on the full 57×93mm
+ * canvas, content offset to the trim origin, and trim marks at the 54×90mm trim box.
+ */
+function printSheet(content: string, bleedFill: string, markStroke: string): string {
+  const markLen = BLEED - 0.5 * MM;
+  const xs = [BLEED, BLEED + CARD_WIDTH];
+  const ys = [BLEED, BLEED + CARD_HEIGHT];
+  const marks: string[] = [];
+  for (const x of xs) {
+    marks.push(`<line x1="${px(x)}" y1="0" x2="${px(x)}" y2="${px(markLen)}" />`);
+    marks.push(`<line x1="${px(x)}" y1="${px(SHEET_HEIGHT)}" x2="${px(x)}" y2="${px(SHEET_HEIGHT - markLen)}" />`);
+  }
+  for (const y of ys) {
+    marks.push(`<line x1="0" y1="${px(y)}" x2="${px(markLen)}" y2="${px(y)}" />`);
+    marks.push(`<line x1="${px(SHEET_WIDTH)}" y1="${px(y)}" x2="${px(SHEET_WIDTH - markLen)}" y2="${px(y)}" />`);
+  }
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${TRIM_WIDTH_MM + BLEED_MM * 2}mm" height="${TRIM_HEIGHT_MM + BLEED_MM * 2}mm" viewBox="0 0 ${px(SHEET_WIDTH)} ${px(SHEET_HEIGHT)}">
+  <defs><style>${FONT_FACE_BLOCK}</style></defs>
+  <rect width="${px(SHEET_WIDTH)}" height="${px(SHEET_HEIGHT)}" fill="${bleedFill}" />
+  <g transform="translate(${px(BLEED)}, ${px(BLEED)})">
+    ${content}
+  </g>
+  <g stroke="${markStroke}" stroke-width="0.35">${marks.join('')}</g>
+</svg>`.trim();
+}
+
 /** M-in-pill monogram mark (outline finish), centered on (cx, cy). `r` is the half-height. */
 function heymaxMark(cx: number, cy: number, r: number, color: string): string {
   const h = r * 2;
@@ -157,21 +195,18 @@ export function frontCardSvg(d: NameCardData, _opts: SvgOptions = {}): string {
   const logo = heymaxLogo({
     transform: `translate(${logoX}, ${bottomY}) rotate(-90)`,
     width: logoWidth,
-    heyFill: '#C4B2D0',
-    maxFill: '#31008B',
+    heyFill: '#C6B2D0',
+    maxFill: '#3F2E7F',
     gradientId: 'hmFrontGrad',
   });
 
   const iAmX = logoX + logoBand + 32;
 
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${CARD_WIDTH}" height="${CARD_HEIGHT}" viewBox="0 0 ${CARD_WIDTH} ${CARD_HEIGHT}">
-  <defs><style>${FONT_FACE_BLOCK}</style></defs>
-  <rect width="${CARD_WIDTH}" height="${CARD_HEIGHT}" fill="${d.frontBg}" />
-  <g transform="rotate(-90 28 28)">${heymaxMark(28, 28, 10, '#FFFFFF')}</g>
+  const content = `<g transform="rotate(-90 28 28)">${heymaxMark(28, 28, 10, '#FFFFFF')}</g>
   ${logo}
-  <text transform="translate(${iAmX}, ${bottomY}) rotate(-90)" font-family="${FONT_STACK}" font-weight="300" font-size="30" fill="#FFFFFF">I am ${escapeXml(firstName)}</text>
-</svg>`.trim();
+  <text transform="translate(${iAmX}, ${px(bottomY)}) rotate(-90)" font-family="${FONT_STACK}" font-weight="300" font-size="30" fill="#FFFFFF">I am ${escapeXml(firstName)}</text>`;
+
+  return printSheet(content, d.frontBg, '#FFFFFF');
 }
 
 /** Info side — white card with the logo lockup, then name, role, QR, and contact details. */
@@ -233,29 +268,26 @@ export function backCardSvg(d: NameCardData): string {
       .map((line, i) => `<tspan x="${x}" dy="${i === 0 ? 0 : lineHeight}">${escapeXml(line)}</tspan>`)
       .join('');
 
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${CARD_WIDTH}" height="${CARD_HEIGHT}" viewBox="0 0 ${CARD_WIDTH} ${CARD_HEIGHT}">
-  <defs><style>${FONT_FACE_BLOCK}</style></defs>
-  <rect width="${CARD_WIDTH}" height="${CARD_HEIGHT}" fill="#FFFFFF" />
-  ${logo}
+  const content = `${logo}
 
-  <text x="${PAD}" y="${nameBaseY}" font-family="${FONT_STACK}" font-weight="600" font-size="17" fill="${INK}">${tspans(nameLines, PAD, nameLineHeight)}</text>
-  <text x="${PAD}" y="${roleBaseY}" font-family="${FONT_STACK}" font-weight="500" font-size="10" fill="${PURPLE}">${tspans(roleLines, PAD, roleLineHeight)}</text>
+  <text x="${PAD}" y="${px(nameBaseY)}" font-family="${FONT_STACK}" font-weight="600" font-size="17" fill="${INK}">${tspans(nameLines, PAD, nameLineHeight)}</text>
+  <text x="${PAD}" y="${px(roleBaseY)}" font-family="${FONT_STACK}" font-weight="500" font-size="10" fill="${PURPLE}">${tspans(roleLines, PAD, roleLineHeight)}</text>
 
   ${qrPlaced}
 
-  <text x="${PAD}" y="${phoneY}" font-family="${FONT_STACK}" font-weight="400" font-size="10" fill="#2F1F5E">t: ${escapeXml(clip(d.phone || NAME_CARD_PLACEHOLDERS.phone, 26))}</text>
-  <text x="${PAD}" y="${emailY}" font-family="${FONT_STACK}" font-weight="400" font-size="10" fill="#2F1F5E">e: ${escapeXml(clip(d.email || NAME_CARD_PLACEHOLDERS.email, 26))}</text>
+  <text x="${PAD}" y="${px(phoneY)}" font-family="${FONT_STACK}" font-weight="400" font-size="10" fill="${INK}">t: ${escapeXml(clip(d.phone || NAME_CARD_PLACEHOLDERS.phone, 26))}</text>
+  <text x="${PAD}" y="${px(emailY)}" font-family="${FONT_STACK}" font-weight="400" font-size="10" fill="${INK}">e: ${escapeXml(clip(d.email || NAME_CARD_PLACEHOLDERS.email, 26))}</text>
 
   ${
     showAddress
-      ? `<text x="${PAD}" y="${addressBaseY}" font-family="${FONT_STACK}" font-weight="400" font-size="7.5" fill="${INK}">${tspans(addressLines, PAD, addressLineHeight)}</text>
-  <text x="${PAD}" y="${websiteY}" font-family="${FONT_STACK}" font-weight="400" font-size="7.5" fill="${INK}">${escapeXml(clip(d.website || '', 30))}</text>`
+      ? `<text x="${PAD}" y="${px(addressBaseY)}" font-family="${FONT_STACK}" font-weight="400" font-size="7.5" fill="${INK}">${tspans(addressLines, PAD, addressLineHeight)}</text>
+  <text x="${PAD}" y="${px(websiteY)}" font-family="${FONT_STACK}" font-weight="400" font-size="7.5" fill="${INK}">${escapeXml(clip(d.website || '', 30))}</text>`
       : ''
   }
 
-  ${heymaxMark(CARD_WIDTH - 26, CARD_HEIGHT - 26, 9, INK)}
-</svg>`.trim();
+  ${heymaxMark(CARD_WIDTH - 26, CARD_HEIGHT - 26, 9, INK)}`;
+
+  return printSheet(content, '#FFFFFF', '#000000');
 }
 
 let crcTable: Uint32Array | undefined;
